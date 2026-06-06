@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Server {
+  id               String   @id @default(cuid())
+  name             String
+  location         String
+  flag             String
+  serverPublicKey  String
+  serverEndpoint   String
+  clientPrivateKey String
+  clientAddress    String
+  dnsServer        String   @default("1.1.1.1")
+  isActive         Boolean  @default(false)
+  status           String   @default("online") // online, offline, maintenance
+  connectedUsers   Int      @default(0)
+  bandwidth        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users User[]
+
+  @@map("servers")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  serverId  String?
+  status    String   @default("active") // active, inactive, banned
+  plan      String   @default("free") // free, pro, enterprise
+  dataUsed  BigInt   @default(0)
+  dataLimit BigInt   @default(10737418240) // 10GB
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen  DateTime @default(now())
+
+  server Server? @relation(fields: [serverId], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Settings {
+  id                String   @id @default(cuid())
+  appName           String   @default("JpayVPN")
+  apiKey            String   @unique
+  maxUsersPerServer Int      @default(50)
+  defaultDns        String   @default("1.1.1.1")
+  allowRegistration Boolean  @default(true)
+  maintenanceMode   Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("settings")
+}
